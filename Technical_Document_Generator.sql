@@ -513,8 +513,6 @@ INTO #table_index_info
 
 -- We create a temporary table for storing constraint information. This is becuase it will be easier later when we want to combine the various columns
 -- that might be part of an constraint into a single column in the form of comma separated variables 
- IF OBJECT_ID('tempdb.dbo.#table_constraint_info_temp', 'U') IS NOT NULL
-  DROP TABLE #table_constraint_info_temp; 
 
  IF OBJECT_ID('tempdb.dbo.#table_constraint_info', 'U') IS NOT NULL
   DROP TABLE #table_constraint_info; 
@@ -532,8 +530,8 @@ SELECT
 			, 1, 2, ''
 			)
 	) AS CONSTRAINTS
-	,0 AS [filtering_id]
-INTO #table_constraint_info_temp	
+	,3 AS [filtering_id]
+INTO #table_constraint_info	
  FROM
 
 (
@@ -561,23 +559,6 @@ INTO #table_constraint_info_temp
 ) index_sub_query
 
 
-SELECT  MAX(Table_Name) AS Table_Name
-	   ,Column_Name
-	   , Data_Type = 
-			STUFF(
-					(
-						SELECT ', ' + Data_Type
-						FROM #table_index_info b 
-					    WHERE b.Column_Name = a.Column_Name
-						FOR XML PATH('')
-					), 
-					1, 2, ''
-				)
-	   ,MAX(CONSTRAINTS) AS CONSTRAINTS
-	   ,MAX(filtering_id) AS filtering_id
-INTO #table_constraint_info
-FROM #table_constraint_info_temp a
-GROUP BY Column_Name
 
 
 -- Beginning ofthe Union All statements where we combine all sections related to tables together 
@@ -737,6 +718,44 @@ ON
 WHERE 
 	o.TYPE IN ('u')
 	AND d.referenced_id IS NULL
+
+-- Constraints
+UNION ALL
+SELECT  MAX(Table_Name) AS Table_Name
+	   ,Column_Name
+	   , Data_Type = 
+			STUFF(
+					(
+						SELECT ', ' + Data_Type
+						FROM #table_index_info b 
+					    WHERE b.Column_Name = a.Column_Name
+						FOR XML PATH('')
+					), 
+					1, 2, ''
+				)
+	   ,MAX(CONSTRAINTS) AS CONSTRAINTS
+	   ,MAX(filtering_id) AS filtering_id
+FROM #table_constraint_info a
+GROUP BY Column_Name
+
+UNION ALL
+--- This displays |"N/A(No Constraint)" |  N/A   | N/A  | if no constraints are associated with a table
+
+SELECT
+	CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') AS [Table_Name],
+	'N/A (No constraints)'	AS [Column_Name], -- Trigger Name
+	'N/A'				AS [Data_Type], -- Trigger Type
+	'N/A'				AS [CONSTRAINTS],
+	 4					AS [filtering_id]
+FROM 
+			sys.objects o
+		LEFT OUTER JOIN
+			sys.indexes ind
+		ON o.object_id = ind.object_id
+WHERE 
+	ind.object_id IS NULL
+	AND 
+	o.type_desc = 'USER_TABLE'
 
 -- Triggers
 UNION ALL
