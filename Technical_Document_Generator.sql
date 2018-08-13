@@ -286,14 +286,14 @@ SELECT @xml_doc_schema = (SELECT  @schema_heading,@xml_doc_schema  for xml path 
 
 SELECT
 	 CONCAT('[',SCHEMA_NAME(schema_id),'].','[',name,']') AS [Name],
-	CASE TYPE_NAME(user_type_id)
-			WHEN 'varchar' THEN CONCAT(TYPE_NAME(user_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')')
-			WHEN 'char' THEN CONCAT(TYPE_NAME(user_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')')
-			WHEN 'nvarchar' THEN CONCAT(TYPE_NAME(user_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')')
-			WHEN 'nchar' THEN CONCAT(TYPE_NAME(user_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')')
-			WHEN 'decimal' THEN CONCAT(TYPE_NAME(user_type_id),'(',precision,',',scale,')')
-			WHEN 'numeric' THEN CONCAT(TYPE_NAME(user_type_id),'(',precision,',',scale,')')
-			ELSE TYPE_NAME(user_type_id)
+	CASE TYPE_NAME(system_type_id)
+			WHEN 'varchar' THEN CONCAT(TYPE_NAME(system_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')')
+			WHEN 'char' THEN CONCAT(TYPE_NAME(system_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')')
+			WHEN 'nvarchar' THEN CONCAT(TYPE_NAME(system_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')')
+			WHEN 'nchar' THEN CONCAT(TYPE_NAME(system_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')')
+			WHEN 'decimal' THEN CONCAT(TYPE_NAME(system_type_id),'(',precision,',',scale,')')
+			WHEN 'numeric' THEN CONCAT(TYPE_NAME(system_type_id),'(',precision,',',scale,')')
+			ELSE TYPE_NAME(system_type_id)
 		END AS  Base_Data_Type,
 		CASE is_nullable
 			WHEN 0 THEN 'Non Null'
