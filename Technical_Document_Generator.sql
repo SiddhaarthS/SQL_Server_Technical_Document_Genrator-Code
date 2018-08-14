@@ -103,7 +103,7 @@ SET @index_of_topics = '
 			<center><u>INDEX</u></center>
 		</h1>
 		<ul>
-			<li><h3><a href = "#schema">User Defined Schemas</a></h3></li>
+			<li><h3><a href = "#schema">Schemas</a></h3></li>
 			<li><h3><a href = "#data_type">User Defined Data Types</a></h3></li>
 			<li><h3><a href = "#table_type">User Defined Table Types</a></h3></li>
 			<li><h3><a href = "#table">Tables</a></h3></li>
@@ -120,7 +120,7 @@ SET @schema_heading = '
 		<br/>
 		<br/>
 		<h2>
-		<a name = "schema">User Defined Schemas</a>
+		<a name = "schema">Schemas</a>
 		</h2>
 		<br/>
 		<br/>
