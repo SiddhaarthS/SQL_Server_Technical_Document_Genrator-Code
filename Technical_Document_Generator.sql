@@ -121,8 +121,8 @@ SET @index_of_topics = '
 			<li><h3><a href = "#data_type">User Defined Data Types</a></h3></li>
 			<li><h3><a href = "#table_type">User Defined Table Types</a></h3></li>
 			<li><h3><a href = "#table">Tables</a></h3></li>
-			<li><h3><a href = "#procedure">Procedures</a></h3></li>
 			<li><h3><a href = "#view">Views</a></h3></li>
+			<li><h3><a href = "#procedure">Procedures</a></h3></li>
 			<li><h3><a href = "#function">Functions</a></h3></li>
 			<li><h3><a href = "#table_function">Table Valued Functions</a></h3></li>			
 		</ul>
