@@ -1091,19 +1091,7 @@ SELECT
 			t1.filtering_id = 2
 		FOR XML PATH('span'), type,root('ul')
 	),
-	'Dependent on:' AS 'h5',
-	(
-		SELECT 
-			  'dependency' AS '@class',
-			 (SELECT  t1.Column_Name  AS 'li' FOR XML PATH(''),type)
-		FROM 
-			#table_info t1
-		WHERE 
-			t1.Table_Name = t2.Table_Name
-			AND
-			t1.filtering_id = 1
-		FOR XML PATH('span'), type,root('ul')
-	),
+
 	'' AS 'hr'
 FROM (SELECT DISTINCT Table_Name FROM #table_info) t2
 FOR XML PATH ('')
