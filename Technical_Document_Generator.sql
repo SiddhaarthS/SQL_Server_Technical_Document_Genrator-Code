@@ -19,6 +19,7 @@ DECLARE @xml_header_proc XML
 DECLARE @xml_header_func XML
 DECLARE @xml_header_trigger XML
 DECLARE @xml_header_index XML
+DECLARE @xml_header_key XML
 
 DECLARE @index_of_topics XML
 
@@ -94,6 +95,12 @@ SET @xml_header_index = '
 		<th>Index Name</th>
         <th>Index Keys</th>
         <th>Characteristics</th>
+'
+
+SET @xml_header_key = '   
+		<th>Key Name</th>
+        <th>Key Type</th>
+        <th>Columns and References</th>
 '
 
 SET @index_of_topics = '   
@@ -464,6 +471,7 @@ SELECT @xml_doc_user_defined_table_type = (SELECT  @user_defined_table_type_head
 ---       3         |    Constraints
 ---       4         |    Triggers
 ---       5         |    Indices
+---       6         |    Keys
 */
 
 -- We create a temporary table for storing index information. This is becuase it will be easier later when we want to combine the various columns
@@ -556,9 +564,48 @@ INTO #table_constraint_info
 		ON o.object_id = ind.object_id
 	WHERE 
 		o.type_desc = 'USER_TABLE' 
-) index_sub_query
+) costraint_sub_query
 
+-- We create a temporary table for storing constraint information. This is becuase it will be easier later when we want to combine the various columns
+-- that might be part of an constraint into a single column in the form of comma separated variables 
+ IF OBJECT_ID('tempdb.dbo.#table_key_info', 'U') IS NOT NULL
+  DROP TABLE #table_key_info; 
 
+SELECT
+	CONCAT('[',SCHEMA_NAME(T.schema_id),'].','[',T.name,']') AS Table_Name , 
+	kc.name AS [Column_Name],
+	CASE kc.type
+		WHEN 'PK' THEN 'Primary Key'
+		WHEN 'UQ' THEN 'Unique'
+	END AS [Data_Type],
+	COL_NAME(T.object_id, C.column_id) AS CONSTRAINTS,
+	6 AS [filtering_id]
+INTO #table_key_info
+FROM 
+		sys.objects AS T
+    INNER JOIN
+	    sys.columns AS C 
+	ON T.object_id = C.object_id
+	INNER JOIN 
+		sys.key_constraints kc
+	ON kc.parent_object_id = T.object_id
+WHERE  T.type_desc = 'USER_TABLE' 
+UNION ALL
+SELECT 
+   CONCAT('[',OBJECT_SCHEMA_NAME(f.parent_object_id),'].','[',OBJECT_NAME(f.parent_object_id),']') AS Table_Name , 
+   f.name AS [Column_Name], 
+   'Foreign Key' AS [Data_Type],
+   
+   CONCAT( COL_NAME(fc.parent_object_id, fc.parent_column_id),' --> [',OBJECT_SCHEMA_NAME(f.referenced_object_id),'].','[',OBJECT_NAME(f.referenced_object_id),'] - ',COL_NAME(fc.referenced_object_id, fc.referenced_column_id)) AS CONSTRAINTS,
+   6 AS [filtering_id]
+    
+FROM 
+		sys.foreign_keys AS f 
+	INNER JOIN 
+		sys.foreign_key_columns AS fc 
+	ON f.OBJECT_ID = fc.constraint_object_id
+ORDER BY
+	[Table_Name]
 
 
 -- Beginning ofthe Union All statements where we combine all sections related to tables together 
@@ -847,6 +894,62 @@ WHERE
 	AND 
 	o.type_desc = 'USER_TABLE'
 
+--KEYS
+UNION ALL
+
+SELECT  MAX(Table_Name) AS Table_Name
+	   , Column_Name
+	   , MAX(Data_Type)  AS Data_type
+	   ,CONSTRAINTS =  
+			REPLACE(STUFF(
+					(
+						SELECT ', ' + CONSTRAINTS
+						FROM #table_key_info b 
+					    WHERE b.Column_Name = a.Column_Name
+						FOR XML PATH('')
+					), 
+					1, 2, ''
+				),'&gt;', '>')
+	   ,MAX(filtering_id) AS filtering_id
+FROM #table_key_info a
+GROUP BY Column_Name
+
+UNION ALL
+--- This displays |"N/A(No keys)" |  N/A   | N/A  | if no indices are associated with a table
+
+SELECT
+	CONCAT('[',OBJECT_SCHEMA_NAME(t.object_id),'].','[',OBJECT_NAME(t.object_id),']') AS [Table_Name],
+	'N/A (No keys)'	AS [Column_Name],	-- Key Name
+	'N/A'				AS [Data_Type], -- Key Type
+	'N/A'				AS [CONSTRAINTS],
+	 4					AS [filtering_id]
+FROM 
+		sys.objects AS T
+WHERE
+	T.type_desc = 'USER_TABLE' 
+	AND
+	t.object_id NOT IN (
+						SELECT
+							T.object_id AS table_id
+						FROM 
+								sys.objects AS T
+							INNER JOIN
+								sys.columns AS C 
+							ON T.object_id = C.object_id
+							INNER JOIN 
+								sys.key_constraints kc
+							ON kc.parent_object_id = T.object_id
+						WHERE  T.type_desc = 'USER_TABLE' 
+						UNION ALL
+						SELECT 
+						   f.parent_object_id AS table_id 
+						FROM 
+								sys.foreign_keys AS f 
+							INNER JOIN 
+								sys.foreign_key_columns AS fc 
+							ON f.OBJECT_ID = fc.constraint_object_id
+					) 
+
 ) table_sub_query
 ORDER BY Table_Name
 
@@ -889,6 +992,26 @@ SELECT
 			AND
 				t1.filtering_id = 0
 			FOR XML PATH('tr'), TYPE
+		),
+		'' AS 'br'
+		FOR XML PATH('table'),TYPE
+	),
+	'Keys: ' AS 'h5',
+	(SELECT
+		 @xml_header_key,	
+		(	
+			SELECT 
+			
+				 (SELECT   t1.Column_Name	AS 'td' FOR XML PATH(''),TYPE)
+				,(SELECT   t1.Data_Type		AS 'td'	FOR XML PATH(''),TYPE)
+				,(SELECT   t1.CONSTRAINTS	AS 'td'	FOR XML PATH(''),TYPE)
+			
+			FROM #table_info t1
+			WHERE t1.Table_Name = t2.Table_Name
+			AND
+				t1.filtering_id = 6
+			FOR XML PATH('tr'), TYPE
+			
 		),
 		'' AS 'br'
 		FOR XML PATH('table'),TYPE
