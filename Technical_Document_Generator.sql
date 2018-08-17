@@ -20,6 +20,7 @@ DECLARE @xml_header_func XML
 DECLARE @xml_header_trigger XML
 DECLARE @xml_header_index XML
 DECLARE @xml_header_key XML
+DECLARE @xml_header_constraint XML
 
 DECLARE @index_of_topics XML
 
@@ -101,6 +102,12 @@ SET @xml_header_key = '
 		<th>Key Name</th>
         <th>Key Type</th>
         <th>Columns and References</th>
+'
+
+SET @xml_header_constraint = '   
+		<th>Constraint Name</th>
+        <th>Constraint Type</th>
+        <th>Default Value/ Check Condition</th>
 '
 
 SET @index_of_topics = '   
@@ -519,55 +526,8 @@ INTO #table_index_info
 		o.type_desc = 'USER_TABLE' 
 ) index_sub_query
 
--- We create a temporary table for storing constraint information. This is becuase it will be easier later when we want to combine the various columns
--- that might be part of an constraint into a single column in the form of comma separated variables 
-
- IF OBJECT_ID('tempdb.dbo.#table_constraint_info', 'U') IS NOT NULL
-  DROP TABLE #table_constraint_info; 
-
-SELECT 
-	CONCAT('[',OBJECT_SCHEMA_NAME(object_id),'].','[',OBJECT_NAME(object_id),']') AS Table_Name
-	,Index_Name AS Column_Name
-	,Column_Name AS Data_Type 
-	,CONCAT('',
-		STUFF(
-			IIF([Index_Type]		= '','', COALESCE(', ' + RTRIM([Index_Type]),	'') )
-			+ IIF([is_primary_key]	= 0	,'', COALESCE(', ' + RTRIM('Primary Key'),	'') )
-			+ IIF([is_unique]		= 0	,'', COALESCE(', ' + RTRIM('Unique'),		''))
-			+ IIF([has_filter]		= 0	,'', COALESCE(', ' + RTRIM('Filtered'),		''))
-			, 1, 2, ''
-			)
-	) AS CONSTRAINTS
-	,3 AS [filtering_id]
-INTO #table_constraint_info	
- FROM
-
-(
-	SELECT 
-		 o.object_id        	AS [object_id]
-		,ind.name				AS [Index_Name]
-		,col.name				AS [Column_Name]
-		,ind.type_desc			AS [Index_Type]
-		,ind.is_unique		AS [is_unique]
-		,ind.is_primary_key AS [is_primary_key]
-		,ind.has_filter		 [has_filter]
-	FROM 
-			sys.indexes ind
-		INNER JOIN 
-			 sys.index_columns ic 
-		ON  ind.object_id = ic.object_id AND ind.index_id = ic.index_id 
-		INNER JOIN 
-			 sys.columns col 
-		ON ic.object_id = col.object_id AND ic.column_id = col.column_id 
-		INNER JOIN
-			sys.objects o
-		ON o.object_id = ind.object_id
-	WHERE 
-		o.type_desc = 'USER_TABLE' 
-) costraint_sub_query
-
--- We create a temporary table for storing constraint information. This is becuase it will be easier later when we want to combine the various columns
--- that might be part of an constraint into a single column in the form of comma separated variables 
+-- We create a temporary table for storing key information. This is becuase it will be easier later when we want to combine the various columns
+-- that might be part of a key into a single column in the form of comma separated variables 
  IF OBJECT_ID('tempdb.dbo.#table_key_info', 'U') IS NOT NULL
   DROP TABLE #table_key_info; 
 
@@ -768,41 +728,83 @@ WHERE
 
 -- Constraints
 UNION ALL
-SELECT  MAX(Table_Name) AS Table_Name
-	   ,Column_Name
-	   , Data_Type = 
-			STUFF(
-					(
-						SELECT ', ' + Data_Type
-						FROM #table_index_info b 
-					    WHERE b.Column_Name = a.Column_Name
-						FOR XML PATH('')
-					), 
-					1, 2, ''
-				)
-	   ,MAX(CONSTRAINTS) AS CONSTRAINTS
-	   ,MAX(filtering_id) AS filtering_id
-FROM #table_constraint_info a
-GROUP BY Column_Name
+
+-- List all default constraints 
+SELECT
+	CONCAT('[',SCHEMA_NAME(T.schema_id),'].','[',T.name,']') AS Table_Name ,
+	   dc.name AS Column_Name ,
+	   'Default' AS Data_Type,
+	   CONCAT(C.name, ' = ', dc.definition) AS CONSTRAINTS,
+	  3 AS [filtering_id]
+FROM	
+			sys.objects AS T
+	   INNER JOIN 
+			sys.default_constraints dc 
+	   ON 
+			t.object_id = dc.parent_object_id 
+       LEFT OUTER JOIN
+			sys.columns AS C 
+	    ON 
+			 C.object_id = dc.parent_object_id AND dc.parent_column_id = c.column_id
+WHERE  T.type_desc = 'USER_TABLE' 
+
+UNION ALL
+-- List all check constraints 
+SELECT 
+	 CONCAT('[',SCHEMA_NAME(T.schema_id),'].','[',T.name,']') AS Table_Name 
+	  ,cc.name AS Column_Name 
+      ,'Check' AS Data_Type
+      ,cc.definition AS CONSTRAINTS
+	  ,3 AS [filtering_id]
+FROM 
+		sys.objects T 
+     INNER JOIN 
+		 sys.check_constraints  cc
+     ON cc.parent_object_id = T.object_id 
+     LEFT OUTER JOIN sys.columns  C 
+         ON cc.parent_object_id = C.object_id AND cc.parent_column_id = C.column_id 
+WHERE T.type_desc = 'USER_TABLE'
 
 UNION ALL
 --- This displays |"N/A(No Constraint)" |  N/A   | N/A  | if no constraints are associated with a table
-
 SELECT
-	CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') AS [Table_Name],
-	'N/A (No constraints)'	AS [Column_Name], -- Trigger Name
-	'N/A'				AS [Data_Type], -- Trigger Type
+	CONCAT('[',OBJECT_SCHEMA_NAME(t.object_id),'].','[',OBJECT_NAME(t.object_id),']') AS [Table_Name],
+	'N/A (No Constraints)'	AS [Column_Name],	-- Constraint Name
+	'N/A'				AS [Data_Type], -- Constraint Type
 	'N/A'				AS [CONSTRAINTS],
-	 4					AS [filtering_id]
+	 3					AS [filtering_id]
 FROM 
-			sys.objects o
-		LEFT OUTER JOIN
-			sys.indexes ind
-		ON o.object_id = ind.object_id
-WHERE 
-	ind.object_id IS NULL
-	AND 
-	o.type_desc = 'USER_TABLE'
+		sys.objects AS T
+WHERE
+	T.type_desc = 'USER_TABLE' 
+	AND
+	t.object_id NOT IN	
+	(
+	SELECT
+		T.object_id AS Table_ID 
+	FROM	
+				sys.objects AS T
+		   INNER JOIN 
+				sys.default_constraints dc 
+		   ON 
+				t.object_id = dc.parent_object_id 
+		   LEFT OUTER JOIN
+				sys.columns AS C 
+			ON 
+				 C.object_id = dc.parent_object_id AND dc.parent_column_id = c.column_id
+	WHERE  T.type_desc = 'USER_TABLE' 
+	UNION ALL
+	SELECT 
+		 T.object_id AS Table_ID 
+	FROM 
+			sys.objects T 
+		 INNER JOIN 
+			 sys.check_constraints  cc
+		 ON cc.parent_object_id = T.object_id 
+		 LEFT OUTER JOIN sys.columns  C 
+			 ON cc.parent_object_id = C.object_id AND cc.parent_column_id = C.column_id 
+	WHERE T.type_desc = 'USER_TABLE'
+	)
 
 -- Triggers
 UNION ALL
@@ -880,10 +882,10 @@ UNION ALL
 
 SELECT
 	CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') AS [Table_Name],
-	'N/A (No index)'	AS [Column_Name], -- Trigger Name
-	'N/A'				AS [Data_Type], -- Trigger Type
+	'N/A (No index)'	AS [Column_Name], -- Index Name
+	'N/A'				AS [Data_Type], --   Index Type
 	'N/A'				AS [CONSTRAINTS],
-	 4					AS [filtering_id]
+	 5					AS [filtering_id]
 FROM 
 			sys.objects o
 		LEFT OUTER JOIN
@@ -922,7 +924,7 @@ SELECT
 	'N/A (No keys)'	AS [Column_Name],	-- Key Name
 	'N/A'				AS [Data_Type], -- Key Type
 	'N/A'				AS [CONSTRAINTS],
-	 4					AS [filtering_id]
+	 6					AS [filtering_id]
 FROM 
 		sys.objects AS T
 WHERE
@@ -1010,6 +1012,26 @@ SELECT
 			WHERE t1.Table_Name = t2.Table_Name
 			AND
 				t1.filtering_id = 6
+			FOR XML PATH('tr'), TYPE
+			
+		),
+		'' AS 'br'
+		FOR XML PATH('table'),TYPE
+	),
+	'Constraints: ' AS 'h5',
+	(SELECT
+		 @xml_header_constraint,	
+		(	
+			SELECT 
+			
+				 (SELECT   t1.Column_Name	AS 'td' FOR XML PATH(''),TYPE)
+				,(SELECT   t1.Data_Type		AS 'td'	FOR XML PATH(''),TYPE)
+				,(SELECT   t1.CONSTRAINTS	AS 'td'	FOR XML PATH(''),TYPE)
+			
+			FROM #table_info t1
+			WHERE t1.Table_Name = t2.Table_Name
+			AND
+				t1.filtering_id = 3
 			FOR XML PATH('tr'), TYPE
 			
 		),
