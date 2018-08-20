@@ -42,6 +42,10 @@ DECLARE @function_list XML
 DECLARE @table_function_list XML
 DECLARE @view_list XML
 
+--These variables will be used to store the collations
+DECLARE @database_collation NVARCHAR(256)
+SELECT @database_collation = CONVERT(NVARCHAR(256),DATABASEPROPERTYEX(DB_NAME(), 'Collation'))
+
 
 SET @xml_header_table = '   
 		<th class="table_td">Column Name</th>
@@ -110,18 +114,71 @@ SET @xml_header_constraint = '
         <th>Default Value/ Check Condition</th>
 '
 
-SET @index_of_topics = '   
+SET @index_of_topics = '  
+		<!--First Page - Page 1--> 
 		<br/>
 		<br/>
 		<h1 style="color: #6AC738; text-align: right">
 			THOROGOOD<sup>'+ CHAR(174) +'</sup>
 		</h1>
 			<br/><br/>
-		<h1>
-			<center style="color: #6AC738">SQL Server Technical Documentation</center>
-			<br/>
-			<center></center>
-			<center><u>INDEX</u></center>
+		<h1 style="color: #6AC738;  text-align: center">
+				SQL Server Technical Documentation
+				<br/>
+				<br/>
+		</h1>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<table>
+			<tr style="color: #6AC738">
+				<td style = " font-size:15">Database Documented</td><td style = " font-size:15">'+db_name()+'</td>
+			</tr>
+			<tr style="color: #6AC738">
+				<td style = " font-size:15">Date Prepared</td><td style = " font-size:15">'+convert(varchar(10), getdate(),120)+'</td>
+			</tr>
+			<tr style="color: #6AC738">
+				<td style = " font-size:15">Document Prepared By</td><td style = " font-size:15">'+SUSER_NAME()+'</td>
+			</tr>
+		</table>
+		<br/>
+		<br/>
+		<br/><!--These line breaks are to split the web page into pages for Word--> 
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+
+		<!--Next Page - Page 2-->
+
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<h1 style="text-align: center">
+			<u>INDEX</u>
 		</h1>
 		<ul>
 			<li><h3><a href = "#schema">Schemas</a></h3></li>
@@ -135,6 +192,32 @@ SET @index_of_topics = '
 		</ul>
 		<br/>
 		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+		<b>Note: </b><p>The database level collation is: '+@database_collation+'</p>
 '
 
 SET @schema_heading = '
@@ -1546,6 +1629,9 @@ SELECT
 		t2.Procedure_Name AS '@name'
 		,t2.Procedure_Name AS 'b'
 		FOR XML PATH('a'),type),
+	'' AS 'br',
+	'' AS 'p',
+	'Description' AS 'b',
 	t2.Procedure_Description AS 'p',
 	'' AS 'p',
 	(
