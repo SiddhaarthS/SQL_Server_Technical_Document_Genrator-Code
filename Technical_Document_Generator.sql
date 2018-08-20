@@ -113,7 +113,14 @@ SET @xml_header_constraint = '
 SET @index_of_topics = '   
 		<br/>
 		<br/>
+		<h1 style="color: #6AC738; text-align: right">
+			THOROGOOD<sup>'+ CHAR(174) +'</sup>
+		</h1>
+			<br/><br/>
 		<h1>
+			<center style="color: #6AC738">SQL Server Technical Documentation</center>
+			<br/>
+			<center></center>
 			<center><u>INDEX</u></center>
 		</h1>
 		<ul>
@@ -230,7 +237,7 @@ th {
   border: 1px solid #000;
   font-family: Trebuchet MS;
   font-size: 15;
-  background-color: #8EC872;
+  background-color: #6AC738;
 }
 
 p,span,div,.dependency {
