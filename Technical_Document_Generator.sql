@@ -391,13 +391,13 @@ SELECT @xml_doc_schema = (SELECT  @schema_heading,@xml_doc_schema  for xml path 
 SELECT
 	 CONCAT('[',SCHEMA_NAME(schema_id),'].','[',name,']') AS [Name],
 	CASE TYPE_NAME(system_type_id)
-			WHEN 'varchar' THEN CONCAT(TYPE_NAME(system_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')')
-			WHEN 'char' THEN CONCAT(TYPE_NAME(system_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')')
-			WHEN 'nvarchar' THEN CONCAT(TYPE_NAME(system_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')')
-			WHEN 'nchar' THEN CONCAT(TYPE_NAME(system_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')')
-			WHEN 'decimal' THEN CONCAT(TYPE_NAME(system_type_id),'(',precision,',',scale,')')
-			WHEN 'numeric' THEN CONCAT(TYPE_NAME(system_type_id),'(',precision,',',scale,')')
-			ELSE TYPE_NAME(system_type_id)
+			WHEN 'varchar' THEN CONCAT(TYPE_NAME(system_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')') COLLATE Latin1_General_CI_AS_KS_WS
+			WHEN 'char' THEN CONCAT(TYPE_NAME(system_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')') COLLATE Latin1_General_CI_AS_KS_WS
+			WHEN 'nvarchar' THEN CONCAT(TYPE_NAME(system_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')') COLLATE Latin1_General_CI_AS_KS_WS
+			WHEN 'nchar' THEN CONCAT(TYPE_NAME(system_type_id),'(',IIF(max_length = -1, 'max',CAST(max_length AS VARCHAR(20)) ),')') COLLATE Latin1_General_CI_AS_KS_WS
+			WHEN 'decimal' THEN CONCAT(TYPE_NAME(system_type_id),'(',precision,',',scale,')') COLLATE Latin1_General_CI_AS_KS_WS
+			WHEN 'numeric' THEN CONCAT(TYPE_NAME(system_type_id),'(',precision,',',scale,')') COLLATE Latin1_General_CI_AS_KS_WS
+			ELSE TYPE_NAME(system_type_id) COLLATE Latin1_General_CI_AS_KS_WS
 		END AS  Base_Data_Type,
 		CASE is_nullable
 			WHEN 0 THEN 'Non Null'
@@ -576,18 +576,18 @@ SELECT @xml_doc_user_defined_table_type = (SELECT  @user_defined_table_type_head
  IF OBJECT_ID('tempdb.dbo.#table_index_info', 'U') IS NOT NULL
   DROP TABLE #table_index_info; 
 SELECT 
-	CONCAT('[',OBJECT_SCHEMA_NAME(object_id),'].','[',OBJECT_NAME(object_id),']') AS Table_Name
+	CONCAT('[',OBJECT_SCHEMA_NAME(object_id),'].','[',OBJECT_NAME(object_id),']')  COLLATE Latin1_General_CI_AS_KS_WS AS Table_Name
 	,Index_Name AS Column_Name
 	,Column_Name AS Data_Type 
-	,CONCAT('',
+	,CONCAT('' COLLATE Latin1_General_CI_AS_KS_WS,
 		STUFF(
-			IIF([Index_Type]		= '','', COALESCE(', ' + RTRIM([Index_Type]),	'') )
-			+ IIF([is_primary_key]	= 0	,'', COALESCE(', ' + RTRIM('Primary Key'),	'') )
-			+ IIF([is_unique]		= 0	,'', COALESCE(', ' + RTRIM('Unique'),		''))
-			+ IIF([has_filter]		= 0	,'', COALESCE(', ' + RTRIM('Filtered'),		''))
-			, 1, 2, ''
+			IIF([Index_Type]		= '','', COALESCE(', ' + RTRIM([Index_Type]),	'') ) COLLATE Latin1_General_CI_AS_KS_WS
+			+ IIF([is_primary_key]	= 0	,'', COALESCE(', ' + RTRIM('Primary Key'),	'') ) COLLATE Latin1_General_CI_AS_KS_WS
+			+ IIF([is_unique]		= 0	,'', COALESCE(', ' + RTRIM('Unique'),		'')) COLLATE Latin1_General_CI_AS_KS_WS
+			+ IIF([has_filter]		= 0	,'', COALESCE(', ' + RTRIM('Filtered'),		'')) COLLATE Latin1_General_CI_AS_KS_WS
+			, 1 , 2 , '' COLLATE Latin1_General_CI_AS_KS_WS
 			)
-	) AS CONSTRAINTS
+	) AS CONSTRAINTS 
 	,5 AS [filtering_id]
 INTO #table_index_info	
  FROM
@@ -642,11 +642,11 @@ FROM
 WHERE  T.type_desc = 'USER_TABLE' 
 UNION ALL
 SELECT 
-   CONCAT('[',OBJECT_SCHEMA_NAME(f.parent_object_id),'].','[',OBJECT_NAME(f.parent_object_id),']') AS Table_Name , 
+   CONCAT('[',OBJECT_SCHEMA_NAME(f.parent_object_id),'].','[',OBJECT_NAME(f.parent_object_id),']') COLLATE Latin1_General_CI_AS AS Table_Name , 
    f.name AS [Column_Name], 
-   'Foreign Key' AS [Data_Type],
+   'Foreign Key' COLLATE Latin1_General_CI_AS  AS [Data_Type],
    
-   CONCAT( COL_NAME(fc.parent_object_id, fc.parent_column_id),' --> [',OBJECT_SCHEMA_NAME(f.referenced_object_id),'].','[',OBJECT_NAME(f.referenced_object_id),'] - ',COL_NAME(fc.referenced_object_id, fc.referenced_column_id)) AS CONSTRAINTS,
+   CONCAT( COL_NAME(fc.parent_object_id, fc.parent_column_id),' --> [',OBJECT_SCHEMA_NAME(f.referenced_object_id),'].','[',OBJECT_NAME(f.referenced_object_id),'] - ',COL_NAME(fc.referenced_object_id, fc.referenced_column_id)) COLLATE Latin1_General_CI_AS AS CONSTRAINTS,
    6 AS [filtering_id]
     
 FROM 
@@ -672,15 +672,15 @@ SELECT
 	Table_Name
 	,Column_Name
 	,Data_Type
-	,CONCAT('',
+	,CONCAT('' COLLATE Latin1_General_CI_AS,
 		STUFF(
-			 IIF([primary key] = '','', COALESCE(', ' + RTRIM([primary key]),     '') )
-			+ IIF([Foreign Key] = '','', COALESCE(', ' + RTRIM([Foreign Key]), '') )
-			+ IIF([Unique_Constraint] = '','', COALESCE(', ' + RTRIM([Unique_Constraint]),  ''))
-			+ IIF([Identity] = '','', COALESCE(', ' + RTRIM([Identity]),  ''))
-			+ IIF([Default] = '','', COALESCE(', ' + RTRIM([Default]),  ''))
-			+ IIF([Allow Nulls] = '','', COALESCE(', ' + RTRIM([Allow Nulls]),  ''))
-			, 1, 2, ''
+			 IIF([primary key] = '','', COALESCE(', ' + RTRIM([primary key]),     '') ) COLLATE Latin1_General_CI_AS
+			+ IIF([Foreign Key] = '','', COALESCE(', ' + RTRIM([Foreign Key]), '') ) COLLATE Latin1_General_CI_AS
+			+ IIF([Unique_Constraint] = '','', COALESCE(', ' + RTRIM([Unique_Constraint]),  '')) COLLATE Latin1_General_CI_AS
+			+ IIF([Identity] = '','', COALESCE(', ' + RTRIM([Identity]),  '')) COLLATE Latin1_General_CI_AS
+			+ IIF([Default] = '','', COALESCE(', ' + RTRIM([Default]),  '')) COLLATE Latin1_General_CI_AS
+			+ IIF([Allow Nulls] = '','', COALESCE(', ' + RTRIM([Allow Nulls]),  '')) COLLATE Latin1_General_CI_AS
+			, 1, 2, '' COLLATE Latin1_General_CI_AS
 			)
 	) AS CONSTRAINTS
 	,0 AS [filtering_id]
@@ -689,15 +689,15 @@ SELECT
  (
 
  SELECT 
-	   CONCAT('[',SCHEMA_NAME(T.schema_id),'].','[',T.name,']') AS Table_Name ,
+	   CONCAT('[',SCHEMA_NAME(T.schema_id),'].','[',T.name,']') COLLATE Latin1_General_CI_AS AS Table_Name ,
        C.name AS Column_Name ,
 	   CASE TYPE_NAME(C.user_type_id)
-			WHEN 'varchar' THEN CONCAT(TYPE_NAME(C.user_type_id),'(',IIF(C.max_length = -1, 'max',CAST(C.max_length AS VARCHAR(20)) ),')')
-			WHEN 'char' THEN CONCAT(TYPE_NAME(C.user_type_id),'(',IIF(C.max_length = -1, 'max',CAST(C.max_length AS VARCHAR(20)) ),')')
-			WHEN 'nvarchar' THEN CONCAT(TYPE_NAME(C.user_type_id),'(',IIF(C.max_length = -1, 'max',CAST(C.max_length AS VARCHAR(20)) ),')')
-			WHEN 'nchar' THEN CONCAT(TYPE_NAME(C.user_type_id),'(',IIF(C.max_length = -1, 'max',CAST(C.max_length AS VARCHAR(20)) ),')')
-			WHEN 'decimal' THEN CONCAT(TYPE_NAME(C.user_type_id),'(',C.precision,',',C.scale,')')
-			WHEN 'numeric' THEN CONCAT(TYPE_NAME(C.user_type_id),'(',C.precision,',',C.scale,')')
+			WHEN 'varchar' THEN CONCAT(TYPE_NAME(C.user_type_id),'(',IIF(C.max_length = -1, 'max',CAST(C.max_length AS VARCHAR(20)) ),')') COLLATE Latin1_General_CI_AS
+			WHEN 'char' THEN CONCAT(TYPE_NAME(C.user_type_id),'(',IIF(C.max_length = -1, 'max',CAST(C.max_length AS VARCHAR(20)) ),')') COLLATE Latin1_General_CI_AS
+			WHEN 'nvarchar' THEN CONCAT(TYPE_NAME(C.user_type_id),'(',IIF(C.max_length = -1, 'max',CAST(C.max_length AS VARCHAR(20)) ),')') COLLATE Latin1_General_CI_AS
+			WHEN 'nchar' THEN CONCAT(TYPE_NAME(C.user_type_id),'(',IIF(C.max_length = -1, 'max',CAST(C.max_length AS VARCHAR(20)) ),')') COLLATE Latin1_General_CI_AS
+			WHEN 'decimal' THEN CONCAT(TYPE_NAME(C.user_type_id),'(',C.precision,',',C.scale,')') COLLATE Latin1_General_CI_AS
+			WHEN 'numeric' THEN CONCAT(TYPE_NAME(C.user_type_id),'(',C.precision,',',C.scale,')') COLLATE Latin1_General_CI_AS
 			ELSE TYPE_NAME(C.user_type_id)
 		END AS  Data_Type ,
 	   IIF(i.is_primary_key IS NULL, '','Primary Key') 'Primary Key',
@@ -740,10 +740,10 @@ WHERE  T.type_desc = 'USER_TABLE'
 UNION ALL
 SELECT 
 	DISTINCT
-	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') AS [Table_Name]
-	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') AS [Column_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [Constraints]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') COLLATE Latin1_General_CI_AS AS [Table_Name]
+	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') COLLATE Latin1_General_CI_AS AS [Column_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [Constraints]
 	 ,1 AS [filtering_id]
 FROM 
 	sys.sql_expression_dependencies d 
@@ -761,10 +761,10 @@ UNION ALL
 
 SELECT 
 	DISTINCT
-	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') AS [Table_Name]
-	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') AS [Column_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [CONSTRAINTS]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') COLLATE Latin1_General_CI_AS AS [Table_Name]
+	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']')  COLLATE Latin1_General_CI_AS AS [Column_Name]	 
+	 ,''COLLATE Latin1_General_CI_AS   AS [Data_Type]
+	 ,''COLLATE Latin1_General_CI_AS  AS [CONSTRAINTS]
 	 ,2 AS [filtering_id]
 FROM 
 	sys.sql_expression_dependencies d 
@@ -782,10 +782,10 @@ UNION ALL
 
 --- This displays "[schema_name].[table_name] is not dependent on any object"if no objects depend on the table
 SELECT 
-	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') AS [Table_Name]
-	 ,CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']',' is not dependent on any object')AS [Column_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [CONSTRAINTS]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') COLLATE Latin1_General_CI_AS AS [Table_Name]
+	 ,CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']',' is not dependent on any object')  COLLATE Latin1_General_CI_AS AS [Column_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [CONSTRAINTS]
 	 ,1 AS [filtering_id]
 FROM 
 	sys.objects o  
@@ -801,10 +801,10 @@ UNION ALL
 
 --- This displays "No dependent object"if no objects depend on the table
 SELECT 
-	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') AS [Table_Name]
-	 ,'No dependent object'AS [Column_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [CONSTRAINTS]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') COLLATE Latin1_General_CI_AS AS [Table_Name]
+	 ,'No dependent object'COLLATE Latin1_General_CI_AS AS [Column_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [CONSTRAINTS]
 	 ,2 AS [filtering_id]
 FROM 
 	sys.objects o  
@@ -821,10 +821,10 @@ UNION ALL
 
 -- List all default constraints 
 SELECT
-	CONCAT('[',SCHEMA_NAME(T.schema_id),'].','[',T.name,']') AS Table_Name ,
-	   dc.name AS Column_Name ,
-	   'Default' AS Data_Type,
-	   CONCAT(C.name, ' = ', dc.definition) AS CONSTRAINTS,
+	CONCAT('[',SCHEMA_NAME(T.schema_id),'].','[',T.name,']') COLLATE Latin1_General_CI_AS AS Table_Name ,
+	   dc.name COLLATE Latin1_General_CI_AS AS Column_Name ,
+	   'Default' COLLATE Latin1_General_CI_AS AS Data_Type,
+	   CONCAT(C.name, ' = ', dc.definition) COLLATE Latin1_General_CI_AS AS CONSTRAINTS,
 	  3 AS [filtering_id]
 FROM	
 			sys.objects AS T
@@ -841,10 +841,10 @@ WHERE  T.type_desc = 'USER_TABLE'
 UNION ALL
 -- List all check constraints 
 SELECT 
-	 CONCAT('[',SCHEMA_NAME(T.schema_id),'].','[',T.name,']') AS Table_Name 
-	  ,cc.name AS Column_Name 
-      ,'Check' AS Data_Type
-      ,cc.definition AS CONSTRAINTS
+	 CONCAT('[',SCHEMA_NAME(T.schema_id),'].','[',T.name,']') COLLATE Latin1_General_CI_AS AS Table_Name 
+	  ,cc.name COLLATE Latin1_General_CI_AS AS Column_Name 
+      ,'Check' COLLATE Latin1_General_CI_AS AS Data_Type
+      ,cc.definition COLLATE Latin1_General_CI_AS AS CONSTRAINTS
 	  ,3 AS [filtering_id]
 FROM 
 		sys.objects T 
@@ -858,10 +858,10 @@ WHERE T.type_desc = 'USER_TABLE'
 UNION ALL
 --- This displays |"N/A(No Constraint)" |  N/A   | N/A  | if no constraints are associated with a table
 SELECT
-	CONCAT('[',OBJECT_SCHEMA_NAME(t.object_id),'].','[',OBJECT_NAME(t.object_id),']') AS [Table_Name],
-	'N/A (No Constraints)'	AS [Column_Name],	-- Constraint Name
-	'N/A'				AS [Data_Type], -- Constraint Type
-	'N/A'				AS [CONSTRAINTS],
+	CONCAT('[',OBJECT_SCHEMA_NAME(t.object_id),'].','[',OBJECT_NAME(t.object_id),']') COLLATE Latin1_General_CI_AS AS [Table_Name],
+	'N/A (No Constraints)'	COLLATE Latin1_General_CI_AS AS [Column_Name],	-- Constraint Name
+	'N/A'				COLLATE Latin1_General_CI_AS AS [Data_Type], -- Constraint Type
+	'N/A'				COLLATE Latin1_General_CI_AS AS [CONSTRAINTS],
 	 3					AS [filtering_id]
 FROM 
 		sys.objects AS T
@@ -900,19 +900,19 @@ WHERE
 UNION ALL
 
 SELECT
-	CONCAT('[',OBJECT_SCHEMA_NAME(tr.parent_id),'].','[',OBJECT_NAME(tr.parent_id),']') AS [Table_Name],
-	CONCAT('[',OBJECT_SCHEMA_NAME(tr.object_id),'].','[',OBJECT_NAME(tr.object_id),']')AS [Column_Name], -- Trigger Name
+	CONCAT('[',OBJECT_SCHEMA_NAME(tr.parent_id),'].','[',OBJECT_NAME(tr.parent_id),']') COLLATE Latin1_General_CI_AS AS [Table_Name],
+	CONCAT('[',OBJECT_SCHEMA_NAME(tr.object_id),'].','[',OBJECT_NAME(tr.object_id),']')COLLATE Latin1_General_CI_AS AS [Column_Name], -- Trigger Name
 	CASE tr.is_instead_of_trigger
-		WHEN 0 THEN 'AFTER'
-		WHEN 1 THEN 'INSTEAD OF'
-		ELSE ''
+		WHEN 0 THEN 'AFTER' COLLATE Latin1_General_CI_AS 
+		WHEN 1 THEN 'INSTEAD OF' COLLATE Latin1_General_CI_AS 
+		ELSE '' COLLATE Latin1_General_CI_AS 
 	END AS [Data_Type], -- Trigger Type
-		CONCAT('',
+		CONCAT('' COLLATE Latin1_General_CI_AS,
 		STUFF(
-			 IIF(CHARINDEX('UPDATE',OBJECT_DEFINITION(tr.object_id))=0,'', COALESCE(', ' + RTRIM('UPDATE'),     ''))  
-			+IIF(CHARINDEX('INSERT',OBJECT_DEFINITION(tr.object_id))=0,'', COALESCE(', ' + RTRIM('INSERT'),     '')) 
-			+IIF(CHARINDEX('DELETE',OBJECT_DEFINITION(tr.object_id))=0,'', COALESCE(', ' + RTRIM('DELETE'),     ''))
-			,1,2,'' 
+			 IIF(CHARINDEX('UPDATE',OBJECT_DEFINITION(tr.object_id))=0,'', COALESCE(', ' + RTRIM('UPDATE'),     ''))   COLLATE Latin1_General_CI_AS
+			+IIF(CHARINDEX('INSERT',OBJECT_DEFINITION(tr.object_id))=0,'', COALESCE(', ' + RTRIM('INSERT'),     ''))  COLLATE Latin1_General_CI_AS
+			+IIF(CHARINDEX('DELETE',OBJECT_DEFINITION(tr.object_id))=0,'', COALESCE(', ' + RTRIM('DELETE'),     '')) COLLATE Latin1_General_CI_AS
+			,1,2,''  COLLATE Latin1_General_CI_AS
 		)
 	) AS [CONSTRAINTS],
 	 4 AS [filtering_id]
@@ -932,10 +932,10 @@ UNION ALL
 --- This displays |"N/A(No triggers)" |  N/A   | N/A  | if no triggers are associated with a table
 
 SELECT
-	CONCAT('[',OBJECT_SCHEMA_NAME(t.object_id),'].','[',OBJECT_NAME(t.object_id),']') AS [Table_Name],
-	'N/A (No triggers)'	AS [Column_Name], -- Trigger Name
-	'N/A'				AS [Data_Type], -- Trigger Type
-	'N/A'				AS [CONSTRAINTS],
+	CONCAT('[',OBJECT_SCHEMA_NAME(t.object_id),'].','[',OBJECT_NAME(t.object_id),']') COLLATE Latin1_General_CI_AS AS [Table_Name],
+	'N/A (No triggers)'	COLLATE Latin1_General_CI_AS AS [Column_Name], -- Trigger Name
+	'N/A'				COLLATE Latin1_General_CI_AS AS [Data_Type], -- Trigger Type
+	'N/A'				COLLATE Latin1_General_CI_AS AS [CONSTRAINTS],
 	 4					AS [filtering_id]
 FROM 
 		sys.objects t
@@ -962,7 +962,7 @@ SELECT  MAX(Table_Name) AS Table_Name
 					), 
 					1, 2, ''
 				)
-	   ,MAX(CONSTRAINTS) collate SQL_Latin1_General_CP1_CI_AS AS CONSTRAINTS
+	   ,MAX(CONSTRAINTS) collate Latin1_General_CI_AS AS CONSTRAINTS
 	   ,MAX(filtering_id) AS filtering_id
 FROM #table_index_info a
 GROUP BY Column_Name
@@ -971,11 +971,11 @@ UNION ALL
 --- This displays |"N/A(No index)" |  N/A   | N/A  | if no indices are associated with a table
 
 SELECT
-	CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') AS [Table_Name],
-	'N/A (No index)'	AS [Column_Name], -- Index Name
-	'N/A'				AS [Data_Type], --   Index Type
-	'N/A'				AS [CONSTRAINTS],
-	 5					AS [filtering_id]
+	CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') COLLATE Latin1_General_CI_AS AS [Table_Name],
+	'N/A (No index)'	COLLATE Latin1_General_CI_AS AS [Column_Name], -- Index Name
+	'N/A'				COLLATE Latin1_General_CI_AS AS [Data_Type], --   Index Type
+	'N/A'				COLLATE Latin1_General_CI_AS AS [CONSTRAINTS],
+	 5					 AS [filtering_id]
 FROM 
 			sys.objects o
 		LEFT OUTER JOIN
@@ -1010,10 +1010,10 @@ UNION ALL
 --- This displays |"N/A(No keys)" |  N/A   | N/A  | if no indices are associated with a table
 
 SELECT
-	CONCAT('[',OBJECT_SCHEMA_NAME(t.object_id),'].','[',OBJECT_NAME(t.object_id),']') AS [Table_Name],
-	'N/A (No keys)'	AS [Column_Name],	-- Key Name
-	'N/A'				AS [Data_Type], -- Key Type
-	'N/A'				AS [CONSTRAINTS],
+	CONCAT('[',OBJECT_SCHEMA_NAME(t.object_id),'].','[',OBJECT_NAME(t.object_id),']') COLLATE Latin1_General_CI_AS AS [Table_Name],
+	'N/A (No keys)'	COLLATE Latin1_General_CI_AS AS [Column_Name],	-- Key Name
+	'N/A'				COLLATE Latin1_General_CI_AS AS [Data_Type], -- Key Type
+	'N/A'				COLLATE Latin1_General_CI_AS AS [CONSTRAINTS],
 	 6					AS [filtering_id]
 FROM 
 		sys.objects AS T
@@ -1249,10 +1249,10 @@ FROM
 UNION ALL
 	SELECT 
 	DISTINCT
-	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') AS [View_Name]
-	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') AS [Column_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [Constraints]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') COLLATE Latin1_General_CI_AS AS [View_Name]
+	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']')COLLATE Latin1_General_CI_AS  AS [Column_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [Constraints]
 	 ,1 AS [filtering_id]
 	FROM 
 		sys.sql_expression_dependencies d 
@@ -1268,10 +1268,10 @@ UNION ALL
 UNION ALL
 	SELECT 
 	DISTINCT
-	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') AS [View_Name]
-	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') AS [Column_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [Constraints]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') COLLATE Latin1_General_CI_AS AS [View_Name]
+	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') COLLATE Latin1_General_CI_AS AS [Column_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,''COLLATE Latin1_General_CI_AS  AS [Constraints]
 	 ,2 AS [filtering_id]
 	FROM 
 		sys.sql_expression_dependencies d 
@@ -1290,10 +1290,10 @@ UNION ALL
 
 --- This displays "[schema_name].[view_name] is not dependent on any object"if no objects depend on the view
 SELECT 
-	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') AS [View_Name]
-	 ,CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']',' is not dependent on any object')AS [Column_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [CONSTRAINTS]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') COLLATE Latin1_General_CI_AS AS [View_Name]
+	 ,CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']',' is not dependent on any object')COLLATE Latin1_General_CI_AS AS [Column_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [CONSTRAINTS]
 	 ,1 AS [filtering_id]
 FROM 
 	sys.objects o  
@@ -1309,10 +1309,10 @@ UNION ALL
 
 --- This displays "No dependent object"if no objects depend on the view
 SELECT 
-	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') AS [View_Name]
-	 ,'No dependent object'AS [Column_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [CONSTRAINTS]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') COLLATE Latin1_General_CI_AS AS [View_Name]
+	 ,'No dependent object' COLLATE Latin1_General_CI_AS AS [Column_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [CONSTRAINTS]
 	 ,2 AS [filtering_id]
 FROM 
 	sys.objects o  
@@ -1328,12 +1328,12 @@ WHERE
 UNION ALL
 
 SELECT
-	CONCAT('[',OBJECT_SCHEMA_NAME(tr.parent_id),'].','[',OBJECT_NAME(tr.parent_id),']') AS [Table_Name],
-	CONCAT('[',OBJECT_SCHEMA_NAME(tr.object_id),'].','[',OBJECT_NAME(tr.object_id),']')AS [Column_Name], -- Trigger Name
+	CONCAT('[',OBJECT_SCHEMA_NAME(tr.parent_id),'].','[',OBJECT_NAME(tr.parent_id),']') COLLATE Latin1_General_CI_AS AS [Table_Name],
+	CONCAT('[',OBJECT_SCHEMA_NAME(tr.object_id),'].','[',OBJECT_NAME(tr.object_id),']')COLLATE Latin1_General_CI_AS AS [Column_Name], -- Trigger Name
 	CASE tr.is_instead_of_trigger
-		WHEN 0 THEN 'AFTER'
-		WHEN 1 THEN 'INSTEAD OF'
-		ELSE ''
+		WHEN 0 THEN 'AFTER' COLLATE Latin1_General_CI_AS 
+		WHEN 1 THEN 'INSTEAD OF' COLLATE Latin1_General_CI_AS 
+		ELSE '' COLLATE Latin1_General_CI_AS 
 	END AS [Data_Type], -- Trigger Type
 		CONCAT('',
 		STUFF(
@@ -1360,10 +1360,10 @@ UNION ALL
 --- This displays |"N/A(No triggers)" |  N/A   | N/A  | if no triggers are associated with a view
 
 SELECT
-	CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') AS [Table_Name],
-	'N/A (No triggers)'	AS [Column_Name], -- Trigger Name
-	'N/A'				AS [Data_Type], -- Trigger Type
-	'N/A'				AS [CONSTRAINTS],
+	CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') COLLATE Latin1_General_CI_AS AS [Table_Name],
+	'N/A (No triggers)'	COLLATE Latin1_General_CI_AS AS [Column_Name], -- Trigger Name
+	'N/A'				COLLATE Latin1_General_CI_AS AS [Data_Type], -- Trigger Type
+	'N/A'				COLLATE Latin1_General_CI_AS AS [CONSTRAINTS],
 	 4					AS [filtering_id]
 FROM 
 		sys.objects o
@@ -1525,11 +1525,11 @@ FROM
 UNION ALL
 	SELECT 
 	DISTINCT
-	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') AS [Procedure_Name]
-	 ,'' AS [Procedure_Description]
-	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') AS [Parameter_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [Parameter_Type]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') COLLATE Latin1_General_CI_AS AS [Procedure_Name]
+	 ,'' COLLATE Latin1_General_CI_AS AS [Procedure_Description]
+	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') COLLATE Latin1_General_CI_AS AS [Parameter_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [Parameter_Type]
 	 ,1 AS [filtering_id]
 	FROM 
 		sys.sql_expression_dependencies d 
@@ -1545,11 +1545,11 @@ UNION ALL
 UNION ALL
 	SELECT 
 	DISTINCT
-	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') AS [Procedure_Name]
-	 ,'' AS [Procedure_Description]
-	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') AS [Parameter_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [Parameter_Type]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') COLLATE Latin1_General_CI_AS AS [Procedure_Name]
+	 ,'' COLLATE Latin1_General_CI_AS AS [Procedure_Description]
+	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') COLLATE Latin1_General_CI_AS AS [Parameter_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [Parameter_Type]
 	 ,2 AS [filtering_id]
 	FROM 
 		sys.sql_expression_dependencies d 
@@ -1566,11 +1566,11 @@ UNION ALL
 
 --- This displays "[schema_name].[procedure_name] is not dependent on any object'"if no objects depend on the procedure
 SELECT 
-	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') AS [Procedure_Name]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') COLLATE Latin1_General_CI_AS AS [Procedure_Name]
 	  ,'' AS [Procedure_Description]
-	 ,CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']',' is not dependent on any object')AS [Parameter_Name]	 
-	 ,'' AS [Parameter_Type]
-	 ,'' AS [CONSTRAINTS]
+	 ,CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']',' is not dependent on any object') COLLATE Latin1_General_CI_AS AS [Parameter_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Parameter_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [CONSTRAINTS]
 	 ,1 AS [filtering_id]
 FROM 
 	sys.objects o  
@@ -1586,11 +1586,11 @@ UNION ALL
 
 --- This displays "No dependent object"if no objects depend on the Procedure
 SELECT 
-	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') AS [Procedure_Name]
-	  ,'' AS [Procedure_Description]
-	 ,'No dependent object'AS [Parameter_Name]	 
-	 ,'' AS [Parameter_Type]
-	 ,'' AS [CONSTRAINTS]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') COLLATE Latin1_General_CI_AS  AS [Procedure_Name]
+	  ,'' COLLATE Latin1_General_CI_AS AS [Procedure_Description]
+	 ,'No dependent object' COLLATE Latin1_General_CI_AS AS [Parameter_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Parameter_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [CONSTRAINTS]
 	 ,2 AS [filtering_id]
 FROM 
 	sys.objects o  
@@ -1745,12 +1745,12 @@ WHERE
 UNION ALL
 SELECT 
 	
-    CONCAT('[',SCHEMA_NAME(SO.schema_id),'].','[',SO.name,']') AS [Function_Name] ,
+    CONCAT('[',SCHEMA_NAME(SO.schema_id),'].','[',SO.name,']') COLLATE Latin1_General_CI_AS AS [Function_Name] ,
 	
 	SUBSTRING(definition, CHARINDEX('RETURNS', definition) + LEN('RETURNS')
-			, CHARINDEX('AS',definition) - (CHARINDEX('RETURNS', definition)+ LEN('RETURNS'))) AS [Parameter_Name],
-	 'TABLE' AS  Data_Type,
-	'Output' AS [Parameter_Type],
+			, CHARINDEX('AS',definition) - (CHARINDEX('RETURNS', definition)+ LEN('RETURNS'))) COLLATE Latin1_General_CI_AS AS [Parameter_Name],
+	 'TABLE' COLLATE Latin1_General_CI_AS AS  Data_Type,
+	'Output' COLLATE Latin1_General_CI_AS AS [Parameter_Type],
 	0 AS [filtering_id]
 FROM
 		sys.sql_modules m 
@@ -1769,10 +1769,10 @@ WHERE
 UNION ALL
 SELECT 
 	DISTINCT
-	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') AS [Function_Name]
-	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') AS [Parameter_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [Parameter_Type]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']')COLLATE Latin1_General_CI_AS  AS [Function_Name]
+	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') COLLATE Latin1_General_CI_AS AS [Parameter_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [Parameter_Type]
 	 ,1 AS [filtering_id]
 
 FROM 
@@ -1789,10 +1789,10 @@ WHERE
 UNION ALL
 	SELECT 
 	DISTINCT
-	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') AS [Function_Name]
-	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') AS [Parameter_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [Parameter_Type]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') COLLATE Latin1_General_CI_AS AS [Function_Name]
+	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') COLLATE Latin1_General_CI_AS AS [Parameter_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [Parameter_Type]
 	 ,2 AS [filtering_id]
 	FROM 
 		sys.sql_expression_dependencies d 
@@ -1808,10 +1808,10 @@ UNION ALL
 UNION ALL
 --- This displays "[schema_name].[procedure_name] is not dependent on any object'"if no objects depend on the table valued function
 SELECT 
-	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') AS [Function_Name]
-	 ,CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']',' is not dependent on any object')AS [Parameter_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [Parameter_Type]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') COLLATE Latin1_General_CI_AS AS [Function_Name]
+	 ,CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']',' is not dependent on any object') COLLATE Latin1_General_CI_AS AS [Parameter_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [Parameter_Type]
 	 ,1 AS [filtering_id]
 FROM 
 	sys.objects o  
@@ -1827,10 +1827,10 @@ UNION ALL
 
 --- This displays "No dependent object"if no objects depend on the table valued function
 SELECT 
-	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') AS [Function_Name]
-	 ,'No dependent object'AS [Parameter_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [Parameter_Type]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') COLLATE Latin1_General_CI_AS AS [Function_Name]
+	 ,'No dependent object' COLLATE Latin1_General_CI_AS AS [Parameter_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [Parameter_Type]
 	 ,2 AS [filtering_id]
 FROM 
 	sys.objects o  
@@ -1977,10 +1977,10 @@ WHERE so.type_desc like '%function%'
 UNION ALL
 SELECT 
 	DISTINCT
-	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') AS [Function_Name]
-	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') AS [Parameter_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [Parameter_Type]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') COLLATE Latin1_General_CI_AS AS [Function_Name]
+	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') COLLATE Latin1_General_CI_AS AS [Parameter_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [Parameter_Type]
 	 ,1 AS [filtering_id]
 
 FROM 
@@ -1997,10 +1997,10 @@ WHERE
 UNION ALL
 SELECT 
 	DISTINCT
-	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') AS [Function_Name]
-	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']') AS [Parameter_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [Parameter_Type]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(d.referenced_id),'].','[',OBJECT_NAME(d.referenced_id),']') COLLATE Latin1_General_CI_AS AS [Function_Name]
+	 ,CONCAT('[',OBJECT_SCHEMA_NAME(d.referencing_id),'].','[',OBJECT_NAME(d.referencing_id),']')COLLATE Latin1_General_CI_AS  AS [Parameter_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,''COLLATE Latin1_General_CI_AS  AS [Parameter_Type]
 	 ,2 AS [filtering_id]
 FROM 
 	sys.sql_expression_dependencies d 
@@ -2017,10 +2017,10 @@ WHERE
 UNION ALL
 --- This displays "[schema_name].[procedure_name] is not dependent on any object'"if no objects depend on the function
 SELECT 
-	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') AS [Function_Name]
-	 ,CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']',' is not dependent on any object')AS [Parameter_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [Parameter_Type]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') COLLATE Latin1_General_CI_AS AS [Function_Name]
+	 ,CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']',' is not dependent on any object') COLLATE Latin1_General_CI_AS AS [Parameter_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [Parameter_Type]
 	 ,1 AS [filtering_id]
 FROM 
 	sys.objects o  
@@ -2036,10 +2036,10 @@ UNION ALL
 
 --- This displays "No dependent object"if no objects depend on the function
 SELECT 
-	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') AS [Function_Name]
-	 ,'No dependent object'AS [Parameter_Name]	 
-	 ,'' AS [Data_Type]
-	 ,'' AS [Parameter_Type]
+	 CONCAT('[',OBJECT_SCHEMA_NAME(o.object_id),'].','[',OBJECT_NAME(o.object_id),']') COLLATE Latin1_General_CI_AS AS [Function_Name]
+	 ,'No dependent object' COLLATE Latin1_General_CI_AS AS [Parameter_Name]	 
+	 ,'' COLLATE Latin1_General_CI_AS AS [Data_Type]
+	 ,'' COLLATE Latin1_General_CI_AS AS [Parameter_Type]
 	 ,2 AS [filtering_id]
 FROM 
 	sys.objects o  
